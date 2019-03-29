@@ -1,0 +1,25 @@
+.cart {
+    .cart-bg {
+        background: #ECECEC;
+        padding: 30px;
+      }
+      .card  {
+        margin-right: 50%;
+        height: 150px;
+      }
+      .empty-cart {
+        margin: 15px;
+        height: 50;   
+      }
+      .img {
+        height: 110px;
+      }
+      .description {
+        width: 195px;
+        margin-top: 10px;
+        display: flex;
+      }
+      .price-input {
+       margin-right: 10px;
+      }
+}
