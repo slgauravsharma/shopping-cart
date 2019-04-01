@@ -1,0 +1,26 @@
+.products {
+  overflow-y: scroll;
+  height: calc(100vh - 50px);
+  .grid {
+    background: #ececec;
+    padding: 30px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 10px;
+    .grid-item {
+      height: 270px;
+    }
+    .card {
+      width: 250px;
+      .ant-card-body {
+        padding: 12px;
+      }
+      .ant-card-meta-detail > div:not(:last-child) {
+        margin: 0px;
+      }
+      .img {
+        height: 180px;
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+export const ACTION_LIST_CART = "LIST_CART";
+export const ACTION_ADD_CART = "ADD_CART";
+export const ACTION_UPDATE_CART_PRICE = "UPDATE_CART_PRICE";
+export const ACTION_REMOVE_CART = "REMOVE_CART";
