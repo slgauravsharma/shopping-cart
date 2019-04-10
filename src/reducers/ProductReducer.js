@@ -1,11 +1,11 @@
-import * as ProductActionTypes from "../actions/ProductActionTypes";
-import initialStoreState from "../store/InitialStoreState";
+import * as productActionTypes from "../actions/productActionTypes";
+import initialStoreState from "../store/initialStoreState";
 
 const productReducer = (state = initialStoreState.products, action) => {
   switch (action.type) {
-    case ProductActionTypes.ACTION_LIST_PRODUCT:
-    return action.data
-    case ProductActionTypes.ACTION_UPDATE_PRODUCT_LIST:
+    case productActionTypes.ACTION_LIST_PRODUCT:
+      return action.data;
+    case productActionTypes.ACTION_UPDATE_PRODUCT_LIST:
       return state.map(product => {
         if (product.id === action.data.id) {
           return action.data;

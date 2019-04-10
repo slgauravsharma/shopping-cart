@@ -1,0 +1,21 @@
+.custom {
+    .editor-header {
+        height: 50px;
+        width: 98%;
+        border: 1px solid rgb(229, 229, 229);
+        margin: 10px;
+        padding: 10px;
+        display: flex;
+        .item {
+         cursor: pointer;
+        }
+    }
+    .editor-contain {
+        height: 100px;
+        width: 98%;
+        border: 1px solid rgb(229, 229, 229);
+        margin: 10px;
+        padding: 10px;
+        overflow: auto;
+    }
+}

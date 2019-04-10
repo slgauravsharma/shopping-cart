@@ -1,7 +1,7 @@
 import rootReducer from "../reducers/index";
 import thunk from "redux-thunk";
 import { createStore, applyMiddleware, compose } from "redux";
-import initialStoreState from "./InitialStoreState";
+import initialStoreState from "./initialStoreState";
 
 const initialState = initialStoreState;
 
@@ -10,7 +10,7 @@ const configureStore = createStore(
   initialState,
   compose(
     applyMiddleware(thunk),
-    window.devToolsExtension ? window.devToolsExtension() : f => f
+    window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
   )
 );
 

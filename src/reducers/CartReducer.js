@@ -1,13 +1,13 @@
-import * as CartActionTypes from "../actions/CartActionTypes";
-import initialStoreState from "../store/InitialStoreState";
+import * as cartActionTypes from "../actions/cartActionTypes";
+import initialStoreState from "../store/initialStoreState";
 
 const cartReducer = (state = initialStoreState.carts, action) => {
   switch (action.type) {
-    case CartActionTypes.ACTION_LIST_CART:
-    return action.data
-    case CartActionTypes.ACTION_ADD_CART:
+    case cartActionTypes.ACTION_LIST_CART:
+      return action.data;
+    case cartActionTypes.ACTION_ADD_CART:
       return [...state, action.data];
-    case CartActionTypes.ACTION_UPDATE_CART_PRICE:
+    case cartActionTypes.ACTION_UPDATE_CART_PRICE:
       return state.map(cart => {
         if (cart.id === action.data.id) {
           return action.data;
@@ -15,7 +15,7 @@ const cartReducer = (state = initialStoreState.carts, action) => {
           return cart;
         }
       });
-    case CartActionTypes.ACTION_REMOVE_CART:
+    case cartActionTypes.ACTION_REMOVE_CART:
       return state.filter(cart => cart.id !== action.data.id);
     default:
       return state;

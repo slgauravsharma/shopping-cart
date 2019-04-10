@@ -1,23 +1,16 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.scss';
-import configureStore from "./store/ConfigureStore";
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.scss";
+import configureStore from "./store/configureStore";
 import { Provider } from "react-redux";
-import routes from "./routes";
-import { BrowserRouter as Router, Route } from "react-router-dom";
 import "antd/dist/antd.css";
-import * as serviceWorker from './serviceWorker';
-
-const routeComponents = routes.map(({ path, component }, key) => (
-    <Route exact path={path} component={component} key={key} />
-  ));
+import * as serviceWorker from "./serviceWorker";
+import App from "./App";
 
 const store = configureStore;
 ReactDOM.render(
   <Provider store={store}>
-    <Router>
-      <div>{routeComponents}</div>
-    </Router>
+    <App />
   </Provider>,
   document.getElementById("root")
 );

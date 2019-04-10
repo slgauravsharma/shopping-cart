@@ -1,124 +1,123 @@
 import React, { Component } from "react";
-import { withRouter} from 'react-router-dom'
 import { connect } from "react-redux";
-import { Card, Button } from 'antd';
-import Header from "../../containers/header";
-import InputNumber from "../../containers/inputNumber"
-import './index.scss'
-import { updateCartPriceAction, removeCartAction } from '../../actions/CartAction'
-import { updateProductListAction } from '../../actions/ProductAction'
-
-
-const Description = ({product, onInputQuantityChange, onPriceSave, onRemoveCartProduct, quantity}) => {
-    return (
-        <div>
-           <span>Price: ${product.price} ₹</span> 
-           <div className="description" >
-               <InputNumber  className="price-input"
-                value={quantity} onChange={onInputQuantityChange}
-                placeholder="Enter quantity"/>
-               <Button onClick={onPriceSave}>Save</Button>
-               <Button onClick={onRemoveCartProduct}>Remove</Button>
-           </div>
-        </div>
-    )
-}
+import { Card, message } from "antd";
+import "./index.scss";
+import {
+  updateCartPriceAction,
+  removeCartAction
+} from "../../actions/cartActions";
+import { updateProductListAction } from "../../actions/productActions";
+import CartList from "./CartList";
 
 const { Meta } = Card;
 class Cart extends Component {
+  constructor(props) {
+    super();
+    this.state = {
+      carts: props.carts,
+      quantity: "1"
+    };
+  }
 
-    constructor(props) {
-       super()
-       this.state = {
-          carts: props.carts
-       }
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (nextProps.carts.length !== prevState.carts.length) {
+      return {
+        carts: nextProps.carts
+      };
+    } else {
+      return null;
     }
+  }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (nextProps.carts.length !== prevState.carts.length) {
-            return {
-                carts: nextProps.carts 
-            }
-        } else {
-          return null
+  onInputQuantityChange = (quantity, product) => {
+    const carts = this.state.carts.map(cartProduct => {
+      if (cartProduct.id === product.id) {
+        return { ...product, quantity };
+      } else {
+        return cartProduct;
+      }
+    });
+    this.setState({
+      carts
+    });
+  };
+
+  onPriceSave = product => {
+    this.props.updateCartPriceAction(product);
+    message.success("Cart price is updated successfully.", 1);
+  };
+
+  onRemoveCartProduct = product => {
+    const updatedProduct = {
+      ...product,
+      isCart: false,
+      quantity: ""
+    };
+    this.props.removeCartAction(updatedProduct);
+    this.props.updateProductListAction(updatedProduct);
+  };
+
+  render() {
+    const { carts, quantity } = this.state;
+    const calPricebyQuantity = product => product.price * product.quantity;
+    const calSubTotalPrice = () => {
+      const { carts } = this.props;
+      if (carts.length)
+        if (carts.length === 1) {
+          return calPricebyQuantity(carts[0]);
         }
-    }
-
-    onInputQuantityChange = (quantity, product) => {
-     const carts = this.state.carts.map(cartProduct => {
-            if (cartProduct.id === product.id) {
-                return{...product, quantity}
-            } else {
-                return cartProduct
-            }
+      return (
+        carts.length &&
+        carts.reduce((a, c) => {
+          const calAccValue = typeof a === "number" ? a : calPricebyQuantity(a);
+          return calAccValue + calPricebyQuantity(c);
         })
-        this.setState({
-            carts
-        })
-    }
-
-    onPriceSave = product => {
-      this.props.updateCartPriceAction(product)  
-    }
-
-    onRemoveCartProduct = product => {
-       const updatedProduct = {
-           ...product,
-           isCart: false,
-           quantity: ''
-       }
-       this.props.removeCartAction(updatedProduct)  
-       this.props.updateProductListAction(updatedProduct)
-    }
-
-    render() {
-    const { carts } = this.state
+      );
+    };
     return (
-        <div className="cart">
-            <Header />
-            {carts.map(product => {
-                return (
-                 <div className="cart-bg" key={product.id}>
-                <Card className="card">
-                <Meta
-                    avatar={<img alt="" src={product.imageUrl} className="img" />}
-                    title={product.name}
-                    description={<Description quantity={product.quantity}
-                    product={product}
-                    onInputQuantityChange={(value) => this.onInputQuantityChange(value, product)}
-                    onPriceSave={() => this.onPriceSave(product)}
-                    onRemoveCartProduct={() => this.onRemoveCartProduct(product)}
-                    />}
-                />
-            </Card>  
-            </div>   
-                )
-            })}
-            {!carts.length && (
-                <Card className="empty-cart">
-                <Meta
-                    title="Empty carts..."
-                />
-            </Card> 
-            ) }
-        </div>
-    )
+      <div className="cart">
+        {!carts.length ? (
+          <Card className="empty-cart">
+            <Meta title="Your Shopping Cart is empty." />
+          </Card>
+        ) : (
+          <>
+            <div className="cart-list">
+              <CartList
+                carts={carts}
+                quantity={quantity}
+                onInputQuantityChange={this.onInputQuantityChange}
+                onPriceSave={this.onPriceSave}
+                onRemoveCartProduct={this.onRemoveCartProduct}
+              />
+            </div>
+            <div className="cart-subtotalprice">
+              <Card>
+                <span>
+                  Subtotal ({carts.length} item): {calSubTotalPrice()} ₹
+                </span>
+              </Card>
+            </div>
+          </>
+        )}
+      </div>
+    );
   }
 }
 
 const mapStateToProps = ({ products, carts }) => {
-    return { products, carts };
+  return { products, carts };
+};
+
+const mapDispatchToProps = dispatch => {
+  return {
+    updateCartPriceAction: data => dispatch(updateCartPriceAction(data)),
+    removeCartAction: data => dispatch(removeCartAction(data)),
+    updateProductListAction: data => dispatch(updateProductListAction(data))
   };
-  
-  const mapDispatchToProps = dispatch => {
-    return { 
-        updateCartPriceAction:  data => dispatch(updateCartPriceAction(data)), 
-        removeCartAction: data => dispatch(removeCartAction(data)),
-        updateProductListAction: data => dispatch(updateProductListAction(data))
-     };
-  };
-  
-  export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(withRouter(Cart));
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Cart);
