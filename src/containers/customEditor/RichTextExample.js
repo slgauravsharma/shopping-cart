@@ -1,12 +1,15 @@
-import React from 'react'
+import React, { Fragment } from 'react'
 import { Editor } from 'slate-react'
 import { Value } from 'slate'
 // import {Button} from 'antd'
-import initialValue from './initialValue'
+//import initialValue from './initialValue'
 import { isKeyHotkey } from 'is-hotkey'
 import { Button, Toolbar, Icon } from './common'
-import { Icon as AIcon } from 'antd'
+import { Icon as AIcon, Popover, Input } from 'antd'
 import Plain from 'slate-plain-serializer'
+import './RichTextExample.scss'
+import initialValueAsJson, { tableData, generateTable, textBlock } from './tableValue'
+import TableSettings from './TableSettings';
 
 /**
  * Define the default node type.
@@ -25,6 +28,7 @@ const DEFAULT_NODE = 'paragraph'
 const isBoldHotkey = isKeyHotkey('mod+b')
 const isSubHotkey = isKeyHotkey('shift+q')
 const isContentEditableHotkey = isKeyHotkey('mod+e')
+const isTableHotKey = isKeyHotkey('alt+t')
 const isBackSpaceHotKey = isKeyHotkey('backspace')
 const isItalicHotkey = isKeyHotkey('mod+i')
 const isUnderlinedHotkey = isKeyHotkey('mod+u')
@@ -44,7 +48,8 @@ class RichTextExample extends React.Component {
    */
 
   state = {
-    value: Value.fromJSON(initialValue),
+    value: Value.fromJSON(initialValueAsJson),
+    showTableConfig: false
   }
 
 
@@ -89,8 +94,11 @@ class RichTextExample extends React.Component {
    */
 
   render() {
+    const focusBlockType = this.editor &&
+      this.editor.controller.value.focusBlock
+      && this.editor.controller.value.focusBlock.type
     return (
-      <div>
+      <div className="rich-text-example">
         <Toolbar>
           {this.renderMarkButton('bold', <AIcon type="bold" />)}
           {this.renderMarkButton('q', 'superscript ')}
@@ -98,26 +106,67 @@ class RichTextExample extends React.Component {
           {this.renderMarkButton('italic', <AIcon type="italic" />)}
           {this.renderMarkButton('underlined', <AIcon type="underline" />)}
           {this.renderMarkButton('code', <AIcon type="code" />)}
+          {this.renderMarkButton('table', 'Table')}
           {this.renderBlockButton('heading-one', 'H1')}
           {this.renderBlockButton('heading-two', 'H2')}
           {this.renderBlockButton('block-quote', 'format_quote')}
           {this.renderBlockButton('numbered-list', <AIcon type="ordered-list" />)}
           {this.renderBlockButton('bulleted-list', <AIcon type="bars" />)}
         </Toolbar>
-
-        <Editor
-          spellCheck
-          autoFocus
-          placeholder="enter ..."
-          ref={this.ref}
-          value={this.state.value}
-          onChange={this.onChange}
-          onKeyDown={this.onKeyDown}
-          renderNode={this.renderNode}
-          renderMark={this.renderMark}
-        />
+        {focusBlockType === 'table-cell' ? <TableSettings editor={this.editor} /> : <div style={{ height: '40px' }}></div>}
+        <div className="editor">
+          <Editor
+            spellCheck
+            autoFocus
+            placeholder="enter ..."
+            ref={this.ref}
+            value={this.state.value}
+            onChange={this.onChange}
+            // onKeyDown={this.onKeyDown}
+            renderNode={this.renderNode}
+            renderMark={this.renderMark}
+          //onClick={this.onEditorClick}
+          // onMouseDown={this.onEditorMouseDown}
+          />
+        </div>
       </div>
     )
+  }
+
+  onEditorMouseDown = e => {
+    console.log('mouse down e ', e)
+    //const focusBlockType = this.editor.controller.value.focusBlock.type
+  }
+
+  onEditorClick = () => {
+    console.log('this.editor ', this.editor)
+    // const focusBlockType = this.editor.controller.value.focusBlock.type
+    //console.log('type ', focusBlockType)
+    // const updated = { document: { ...this.state.value.toJSON().document, nodes: [...this.state.value.toJSON().document.nodes, textBlock] } }
+    // this.setState({
+    //   value: Value.fromJSON(updated)
+    // })
+  }
+
+  onBlankTableShow = (e) => {
+    const rows = this.initialRowRef.state.value
+    console.log('r ', rows)
+    const cols = this.initialColRef.state.value
+    console.log('v ', cols)
+    console.log('this.state.value', this.state.value.toJSON())
+    const { document: { nodes } } = this.state.value.toJSON()
+    console.log('nodes ', nodes)
+    console.log('generateTable(rows, cols) ', generateTable(rows, cols))
+    const updated = { document: { ...this.state.value.toJSON().document, nodes: [...this.state.value.toJSON().document.nodes, generateTable(rows, cols)] } }
+    console.log('updated ', updated)
+    this.setState({
+      showTableConfig: false,
+      value: Value.fromJSON(updated)
+    }, () => {
+      this.editor.toggleMark('table')
+      this.initialRowRef.state.value = ''
+      this.initialColRef.state.value = ''
+    })
   }
 
   /**
@@ -131,13 +180,33 @@ class RichTextExample extends React.Component {
   renderMarkButton = (type, icon) => {
     const isActive = this.hasMark(type)
 
+    const content = (
+      <div className="flex">
+        <Input ref={e => { this.initialRowRef = e }} placeholder="row" className="item-input" />
+        <Input ref={e => { this.initialColRef = e }} placeholder="column" className="item-input" />
+        <Button className="ok" onClick={this.onBlankTableShow}>Ok</Button>
+      </div>
+    );
+
     return (
-      <Button
-        active={isActive}
-        onMouseDown={event => this.onClickMark(event, type)}
-      >
-        <Icon>{icon}</Icon>
-      </Button>
+      <>
+        {type === 'table' ? (
+          <Popover content={content} title="Select Table Row and Column" trigger="click" visible={this.state.showTableConfig}
+          >
+            <Button
+              active={isActive}
+              onMouseDown={event => this.onClickMark(event, type)}
+            >
+              <Icon>{icon}</Icon>
+            </Button>
+          </Popover>
+        ) : (<Button
+          active={isActive}
+          onMouseDown={event => this.onClickMark(event, type)}
+        >
+          <Icon>{icon}</Icon>
+        </Button>)}
+      </>
     )
   }
 
@@ -194,6 +263,16 @@ class RichTextExample extends React.Component {
         return <li {...attributes}>{children}</li>
       case 'numbered-list':
         return <ol {...attributes}>{children}</ol>
+      case 'table':
+        return (
+          <table>
+            <tbody {...attributes}>{children}</tbody>
+          </table>
+        )
+      case 'table-row':
+        return <tr {...attributes}>{children}</tr>
+      case 'table-cell':
+        return <td {...attributes}>{children}</td>
       default:
         return next()
     }
@@ -238,10 +317,7 @@ class RichTextExample extends React.Component {
    */
 
   onChange = ({ value }) => {
-    console.log('value ', value)
-    console.log('ref  this.editor ', this.editor)
     const plainText = Plain.serialize(value)
-    console.log('plainText ', plainText)
 
     if (value.document != this.state.value.document) {
       const content = JSON.stringify(value.toJSON())
@@ -259,32 +335,76 @@ class RichTextExample extends React.Component {
    */
 
   onKeyDown = (event, editor, next) => {
-    console.log('event onKeyDown  ', event)
-    let mark
-    if (isBoldHotkey(event)) {
-      mark = 'bold'
-    } else if (isItalicHotkey(event)) {
-      mark = 'italic'
-    } else if (isUnderlinedHotkey(event)) {
-      mark = 'underlined'
-    } else if (isCodeHotkey(event)) {
-      mark = 'code'
-    } else if (isSubHotkey(event)) {
-      console.log('doun A called----')
-      mark = 'q'
-    } else if (isContentEditableHotkey(event)) {
-      mark = 'e'
-    } else if (isBackSpaceHotKey(event)) {
-      mark = 'backspace'
-      console.log('backspace call---')
-      next()
-    }
-    else {
-      return next()
-    }
+    console.log('down--')
+    console.log('event', event)
+    console.log('editor ', editor)
 
-    event.preventDefault()
-    editor.toggleMark(mark)
+    // console.log('event onKeyDown  ', event)
+    // let mark
+    // if (isBoldHotkey(event)) {
+    //   mark = 'bold'
+    // } else if (isItalicHotkey(event)) {
+    //   mark = 'italic'
+    // } else if (isUnderlinedHotkey(event)) {
+    //   mark = 'underlined'
+    // } else if (isCodeHotkey(event)) {
+    //   mark = 'code'
+    // } else if (isSubHotkey(event)) {
+    //   console.log('doun A called----')
+    //   mark = 'q'
+    // } else if (isContentEditableHotkey(event)) {
+    //   mark = 'e'
+    // } else if (isBackSpaceHotKey(event)) {
+    //   mark = 'backspace'
+    //   console.log('backspace call---')
+    //   next()
+    // } else if (isTableHotKey(event)) {
+    //   mark = 'table'
+    // }
+    // else {
+    //   return next()
+    // }
+
+    // event.preventDefault()
+    // editor.toggleMark(mark)
+
+    // const { value } = editor
+    // const { document, selection } = value
+    // const { start, isCollapsed } = selection
+    // const startNode = document.getDescendant(start.key)
+
+    // if (isCollapsed && start.isAtStartOfNode(startNode)) {
+    //   const previous = document.getPreviousText(startNode.key)
+
+    //   if (!previous) {
+    //     return next()
+    //   }
+
+    //   const prevBlock = document.getClosestBlock(previous.key)
+
+    //   if (prevBlock && prevBlock.type === 'table-cell') {
+    //     if (['Backspace', 'Delete', 'Enter'].includes(event.key)) {
+    //       event.preventDefault()
+    //     } else {
+    //       return next()
+    //     }
+    //   }
+    // }
+
+    // if (value.startBlock && value.startBlock.type !== 'table-cell') {
+    //   return next()
+    // }
+
+    // switch (event.key) {
+    //   case 'Backspace':
+    //     return this.onBackspace(event, editor, next)
+    //   case 'Delete':
+    //     return this.onDelete(event, editor, next)
+    //   case 'Enter':
+    //     return this.onEnter(event, editor, next)
+    //   default:
+    //     return next()
+    // }
   }
 
   /**
@@ -295,8 +415,16 @@ class RichTextExample extends React.Component {
    */
 
   onClickMark = (event, type) => {
-    event.preventDefault()
-    this.editor.toggleMark(type)
+    if (type === "table") {
+      this.setState({
+        showTableConfig: !this.state.showTableConfig
+      }, () => {
+        this.editor.toggleMark(type)
+      })
+    } else {
+      event.preventDefault()
+      this.editor.toggleMark(type)
+    }
   }
 
   /**
@@ -348,6 +476,45 @@ class RichTextExample extends React.Component {
         editor.setBlocks('list-item').wrapBlock(type)
       }
     }
+  }
+
+  /**
+ * On backspace, do nothing if at the start of a table cell.
+ *
+ * @param {Event} event
+ * @param {Editor} editor
+ */
+
+  onBackspace = (event, editor, next) => {
+    const { value } = editor
+    const { selection } = value
+    if (selection.start.offset !== 0) return next()
+    event.preventDefault()
+  }
+
+  /**
+   * On delete, do nothing if at the end of a table cell.
+   *
+   * @param {Event} event
+   * @param {Editor} editor
+   */
+
+  onDelete = (event, editor, next) => {
+    const { value } = editor
+    const { selection } = value
+    if (selection.end.offset !== value.startText.text.length) return next()
+    event.preventDefault()
+  }
+
+  /**
+   * On return, do nothing if inside a table cell.
+   *
+   * @param {Event} event
+   * @param {Editor} editor
+   */
+
+  onEnter = (event, editor, next) => {
+    event.preventDefault()
   }
 }
 

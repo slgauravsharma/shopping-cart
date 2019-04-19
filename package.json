@@ -8,6 +8,7 @@
     "is-hotkey": "^0.1.4",
     "node-sass": "^4.11.0",
     "react": "^16.8.6",
+    "react-contenteditable": "^3.2.6",
     "react-dom": "^16.8.6",
     "react-emotion": "^9.2.4",
     "react-redux": "^5.0.7",
@@ -16,7 +17,12 @@
     "redux": "^3.7.2",
     "redux-thunk": "^2.2.0",
     "slate": "^0.45.0",
-    "slate-react": "^0.21.20"
+    "slate-deep-table": "^0.8.0",
+    "slate-edit-table": "^0.18.0",
+    "slate-hyperscript": "^0.11.29",
+    "slate-react": "^0.21.20",
+    "slate-schema-violations": "^0.1.39",
+    "slate-simple-table": "^0.12.3"
   },
   "scripts": {
     "start": "react-scripts start",
