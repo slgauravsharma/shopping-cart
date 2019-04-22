@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react'
 import { Editor } from 'slate-react'
-import { Value } from 'slate'
+import { Value, Block } from 'slate'
 // import {Button} from 'antd'
 //import initialValue from './initialValue'
 import { isKeyHotkey } from 'is-hotkey'
@@ -125,7 +125,7 @@ class RichTextExample extends React.Component {
             // onKeyDown={this.onKeyDown}
             renderNode={this.renderNode}
             renderMark={this.renderMark}
-          //onClick={this.onEditorClick}
+            onClick={this.onEditorClick}
           // onMouseDown={this.onEditorMouseDown}
           />
         </div>
@@ -135,6 +135,7 @@ class RichTextExample extends React.Component {
 
   onEditorMouseDown = e => {
     console.log('mouse down e ', e)
+    console.log(' this.editor ', this.editor)
     //const focusBlockType = this.editor.controller.value.focusBlock.type
   }
 
@@ -319,10 +320,10 @@ class RichTextExample extends React.Component {
   onChange = ({ value }) => {
     const plainText = Plain.serialize(value)
 
-    if (value.document != this.state.value.document) {
-      const content = JSON.stringify(value.toJSON())
-      localStorage.setItem('content', content)
-    }
+    // if (value.document != this.state.value.document) {
+    //   const content = JSON.stringify(value.toJSON())
+    //   localStorage.setItem('content', content)
+    // }
     this.setState({ value })
   }
 

@@ -7,6 +7,7 @@ import { isKeyHotkey } from 'is-hotkey'
 import { Button, Toolbar, Icon } from './common'
 import { Icon as AIcon } from 'antd'
 import Plain from 'slate-plain-serializer'
+
 // import plugins from './plugins';
 import {
     BoldMark, CodeNode, LinkNode, SuperScriptMark,
@@ -30,9 +31,12 @@ const plugins = [
     MarkHotKey({ type: 'italic', key: 'i', }),
     MarkHotKey({ type: 'contentEditable', key: 'e', }),
     MarkHotKey({ type: 'underlined', key: 'u', }),
+    MarkHotKey({ type: 'emoji', key: 'j', }),
+    MarkHotKey({ type: 'undo', key: 'z', }),
+    MarkHotKey({ type: 'redo', key: 'y', }),
     BlockHotKey({ type: "code", normalType: "paragraph", key: "`" }),
     BlockColorHotKey({ key: "g", color: "green" }),
-    WrapInlineHotKey({ type: "link", key: "u" })
+    WrapInlineHotKey({ type: "link", key: "u" }),
 ];
 
 
@@ -65,6 +69,15 @@ const DEFAULT_NODE = 'paragraph'
  */
 
 class RichTextExample extends React.Component {
+
+    schema = {
+        inlines: {
+            emoji: {
+                isVoid: true,
+            },
+        },
+    }
+
     /**
      * Deserialize the initial editor value.
      *
@@ -131,6 +144,7 @@ class RichTextExample extends React.Component {
                     {this.renderBlockButton('block-quote', 'format_quote')}
                     {this.renderBlockButton('numbered-list', <AIcon type="ordered-list" />)}
                     {this.renderBlockButton('bulleted-list', <AIcon type="bars" />)}
+                    {this.renderBlockButton('emoji', '😃')}
                 </Toolbar>
 
                 <Editor
@@ -144,6 +158,8 @@ class RichTextExample extends React.Component {
                     // onKeyDown={this.onKeyDown}
                     renderNode={this.renderNode}
                     renderMark={this.renderMark}
+                    schema={this.schema}
+
                 />
             </div>
         )
@@ -208,7 +224,8 @@ class RichTextExample extends React.Component {
      */
 
     renderNode = (props, editor, next) => {
-        const { attributes, children, node } = props
+        const { attributes, children, node, isFocused } = props
+        const activeFocus = isFocused
         switch (props.node.type) {
             case "code":
                 // ----> REPLACE CodeNode with glamorous Span and get memory leak <----
@@ -235,6 +252,9 @@ class RichTextExample extends React.Component {
                 return <li {...attributes}>{children}</li>
             case 'numbered-list':
                 return <ol {...attributes}>{children}</ol>
+            case 'emoji':
+                return <span
+                    style={activeFocus ? { outline: '2px solid black' } : {}}>😍</span>
             default:
                 return next()
         }
@@ -340,6 +360,16 @@ class RichTextExample extends React.Component {
         const { editor } = this
         const { value } = editor
         const { document } = value
+
+        if (type === 'emoji') {
+            event.preventDefault()
+            const code = '😍'
+            console.log('this.editor ', this.editor)
+            return this.editor
+                .insertInline({ type: 'emoji', data: { code } })
+                .moveToStartOfNextText()
+                .focus()
+        }
 
         // Handle everything but list buttons.
         if (type !== 'bulleted-list' && type !== 'numbered-list') {

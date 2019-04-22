@@ -7,6 +7,13 @@ export function MarkHotKey(options) {
 
       var eventKey = event.keyCode || event.charCode;
 
+      if (event.ctrlKey && event.keyCode === 90) {
+        return editor.undo()
+      }
+      if (event.ctrlKey && event.keyCode === 89) {
+        return editor.redo()
+      }
+
       // remove charater when backspace press
       if (eventKey === key && eventKey == 8 || eventKey == 46) {
         event.preventDefault()

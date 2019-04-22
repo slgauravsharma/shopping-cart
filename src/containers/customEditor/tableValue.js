@@ -60,7 +60,6 @@ export const generateTable = (noOfRows, noOfColumns) => {
     }
 
     const table = {
-        "id": Math.random() * 100000000000000000000,
         "object": "block",
         "type": "table",
         "nodes": rows
