@@ -11,11 +11,11 @@ export class LinkNode extends React.Component {
       <span>
         <a
           {...this.props.attributes}
-          href={this.props.node.data.get("href") || ""}
+          href={this.props.node.data && this.props.node.data.get("href") || ""}
         >
           {this.props.children}
         </a>
-        <sup
+        {/* <sup
           role="button"
           onClick={this.updateHref}
           contentEditable={false}
@@ -24,7 +24,7 @@ export class LinkNode extends React.Component {
           <span role="img" aria-label="Link">
             🔗
           </span>
-        </sup>
+        </sup> */}
       </span>
     );
   }

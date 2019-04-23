@@ -4,7 +4,6 @@ export function MarkHotKey(options) {
   // Return our "plugin" object, containing the `onKeyDown` handler.
   return {
     onKeyDown(event, editor, next) {
-
       var eventKey = event.keyCode || event.charCode;
 
       if (event.ctrlKey && event.keyCode === 90) {
@@ -16,8 +15,13 @@ export function MarkHotKey(options) {
 
       // remove charater when backspace press
       if (eventKey === key && eventKey == 8 || eventKey == 46) {
-        event.preventDefault()
-        editor.deleteCharBackward()
+        const focusBlockType =
+          editor.controller.value.focusBlock
+          && editor.controller.value.focusBlock.type
+        if (focusBlockType !== 'table-cell') {
+          event.preventDefault()
+          editor.deleteCharBackward()
+        }
       }
       // Check that the key pressed matches our `key` option.
       if (!event.ctrlKey || event.key !== key) return next();

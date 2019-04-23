@@ -1,12 +1,14 @@
 import React from 'react'
-import { Editor } from 'slate-react'
-import { Value } from 'slate'
+import { Editor, getEventTransfer } from 'slate-react'
+import { Value, Block } from 'slate'
 // import {Button} from 'antd'
 import initialValue from './initialValue'
 import { isKeyHotkey } from 'is-hotkey'
 import { Button, Toolbar, Icon } from './common'
-import { Icon as AIcon } from 'antd'
+import { Icon as AIcon, message, Popover, Input } from 'antd'
+import isUrl from 'is-url'
 import Plain from 'slate-plain-serializer'
+import imageExtensions from 'image-extensions'
 
 // import plugins from './plugins';
 import {
@@ -22,6 +24,8 @@ import {
     BlockColorHotKey,
     WrapInlineHotKey
 } from "./editor-plugins";
+import { validURL, generateTable } from './utils';
+import TableSettings from './TableSettings';
 
 const plugins = [
     InsertWordHotKey({ char: "&", word: "and" }),
@@ -36,7 +40,7 @@ const plugins = [
     MarkHotKey({ type: 'redo', key: 'y', }),
     BlockHotKey({ type: "code", normalType: "paragraph", key: "`" }),
     BlockColorHotKey({ key: "g", color: "green" }),
-    WrapInlineHotKey({ type: "link", key: "u" }),
+    //WrapInlineHotKey({ type: "link", key: "u" }),
 ];
 
 
@@ -67,10 +71,53 @@ const DEFAULT_NODE = 'paragraph'
  *
  * @type {Component}
  */
+const wrapLink = (editor, href) => {
+    editor.wrapInline({
+        type: 'link',
+        data: { href },
+    })
+
+    editor.moveToEnd()
+}
+
+/**
+ * A change helper to standardize unwrapping links.
+ *
+ * @param {Editor} editor
+ */
+
+const unwrapLink = (editor) => {
+    editor.unwrapInline('link')
+}
+
+const isImage = (url) => {
+    return imageExtensions.includes(getExtension(url))
+}
+
+const getExtension = (url) => {
+    return new URL(url).pathname.split('.').pop()
+}
+
 
 class RichTextExample extends React.Component {
 
     schema = {
+        document: {
+            last: { type: 'paragraph' },
+            normalize: (editor, { code, node, child }) => {
+                switch (code) {
+                    case 'last_child_type_invalid': {
+                        const paragraph = Block.create('paragraph')
+                        return editor.insertNodeByKey(node.key, node.nodes.size, paragraph)
+                    }
+                }
+            },
+        },
+        blocks: {
+            image: {
+                isVoid: true,
+            },
+        },
         inlines: {
             emoji: {
                 isVoid: true,
@@ -86,6 +133,7 @@ class RichTextExample extends React.Component {
 
     state = {
         value: Value.fromJSON(initialValue),
+        showTableConfig: false
     }
 
 
@@ -123,6 +171,52 @@ class RichTextExample extends React.Component {
         this.editor = editor
     }
 
+    hasLinks = () => {
+        const { value } = this.state
+        return value.inlines.some(inline => inline.type === 'link')
+    }
+
+    onPaste = (event, editor, next) => {
+        if (editor.value.selection.isCollapsed) return next()
+
+        const transfer = getEventTransfer(event)
+        const { type, text } = transfer
+        if (type !== 'text' && type !== 'html') return next()
+        if (!isUrl(text)) return next()
+
+        if (this.hasLinks()) {
+            editor.command(unwrapLink)
+        }
+
+        editor.command(wrapLink, text)
+    }
+
+    insertImage = (editor, src, target) => {
+        if (target) {
+            editor.select(target)
+        }
+
+        editor.insertBlock({
+            type: 'image',
+            data: { src },
+        })
+    }
+
+    onBlankTableShow = () => {
+        const rows = this.initialRowRef.state.value
+        const cols = this.initialColRef.state.value
+        this.setState({
+            showTableConfig: false,
+        }, () => {
+            this.editor.insertBlock(generateTable(rows, cols))
+            this.editor.toggleMark('table')
+            this.initialRowRef.state.value = ''
+            this.initialColRef.state.value = ''
+        })
+    }
+
+
+
     /**
      * Render.
      *
@@ -130,6 +224,9 @@ class RichTextExample extends React.Component {
      */
 
     render() {
+        const focusBlockType = this.editor &&
+            this.editor.controller.value.focusBlock
+            && this.editor.controller.value.focusBlock.type
         return (
             <div>
                 <Toolbar>
@@ -145,8 +242,11 @@ class RichTextExample extends React.Component {
                     {this.renderBlockButton('numbered-list', <AIcon type="ordered-list" />)}
                     {this.renderBlockButton('bulleted-list', <AIcon type="bars" />)}
                     {this.renderBlockButton('emoji', '😃')}
+                    {this.renderMarkButton('link', 'link')}
+                    {this.renderBlockButton('image', 'Image')}
+                    {this.renderBlockButton('table', 'Table')}
                 </Toolbar>
-
+                {focusBlockType === 'table-cell' ? <TableSettings editor={this.editor} /> : <div style={{ height: '40px' }}></div>}
                 <Editor
                     plugins={plugins}
                     spellCheck
@@ -156,6 +256,7 @@ class RichTextExample extends React.Component {
                     value={this.state.value}
                     onChange={this.onChange}
                     // onKeyDown={this.onKeyDown}
+                    // onPaste={this.onPaste}
                     renderNode={this.renderNode}
                     renderMark={this.renderMark}
                     schema={this.schema}
@@ -186,6 +287,8 @@ class RichTextExample extends React.Component {
         )
     }
 
+
+
     /**
      * Render a block-toggling toolbar button.
      *
@@ -196,7 +299,6 @@ class RichTextExample extends React.Component {
 
     renderBlockButton = (type, icon) => {
         let isActive = this.hasBlock(type)
-
         if (['numbered-list', 'bulleted-list'].includes(type)) {
             const { value: { document, blocks } } = this.state
 
@@ -205,15 +307,43 @@ class RichTextExample extends React.Component {
                 isActive = this.hasBlock('list-item') && parent && parent.type === type
             }
         }
+        const content = (
+            <div className="flex">
+                <Input ref={e => { this.initialRowRef = e }} placeholder="row" className="item-input" />
+                <Input ref={e => { this.initialColRef = e }} placeholder="column" className="item-input" />
+                <Button className="ok" onClick={this.onBlankTableShow}>Ok</Button>
+            </div>
+        );
 
         return (
-            <Button
-                active={isActive}
-                onMouseDown={event => this.onClickBlock(event, type)}
-            >
-                <Icon>{icon}</Icon>
-            </Button>
+            <>
+                {type === 'table' ? (
+                    <Popover content={content} title="Select Table Row and Column" trigger="click" visible={this.state.showTableConfig}
+                    >
+                        <Button
+                            active={isActive}
+                            onMouseDown={event => this.onClickBlock(event, type)}
+                        >
+                            <Icon>{icon}</Icon>
+                        </Button>
+                    </Popover>
+                ) : (<Button
+                    active={isActive}
+                    onMouseDown={event => this.onClickBlock(event, type)}
+                >
+                    <Icon>{icon}</Icon>
+                </Button>)}
+            </>
         )
+    }
+
+
+
+    onClickImage = event => {
+        event.preventDefault()
+        const src = window.prompt('Enter the URL of the image:')
+        if (!src) return
+        this.editor.command(this.insertImage, src)
     }
 
     /**
@@ -231,8 +361,8 @@ class RichTextExample extends React.Component {
                 // ----> REPLACE CodeNode with glamorous Span and get memory leak <----
                 // I actually can't save it with the Span since it crashes
                 return <CodeNode {...props} />;
-            case "link":
-                return <LinkNode {...props} />;
+            // case "link":
+            //     return <LinkNode {...props} />;
             case "paragraph":
                 const { isSelected, isFocused, ...rest } = props
                 return (
@@ -255,6 +385,26 @@ class RichTextExample extends React.Component {
             case 'emoji':
                 return <span
                     style={activeFocus ? { outline: '2px solid black' } : {}}>😍</span>
+            case 'image':
+                console.log('image----')
+                const src = node.data.get('src')
+                return <img src={src} selected={activeFocus} {...attributes}
+                    style={{
+                        display: 'block',
+                        maxWidth: '100%',
+                        maxHeight: '20em',
+                        boxShadow: activeFocus ? '0 0 0 2px blue' : 'none'
+                    }} />
+            case 'table':
+                return (
+                    <table>
+                        <tbody {...attributes}>{children}</tbody>
+                    </table>
+                )
+            case 'table-row':
+                return <tr {...attributes}>{children}</tr>
+            case 'table-cell':
+                return <td {...attributes}>{children}</td>
             default:
                 return next()
         }
@@ -279,6 +429,8 @@ class RichTextExample extends React.Component {
                 return <ContentEditableMark {...props} />
             case 'underlined':
                 return <GenericElement elementType="u">{props.children}</GenericElement>
+            case "link":
+                return <LinkNode {...props} />;
             default:
                 return next()
         }
@@ -345,6 +497,23 @@ class RichTextExample extends React.Component {
     onClickMark = (event, type) => {
         event.preventDefault()
         this.editor.toggleMark(type)
+        if (type === 'link') {
+            this.onLinkClick(event)
+            this.editor.toggleMark(type)
+        }
+    }
+
+    onLinkClick = event => {
+        event.preventDefault()
+        const { editor } = this
+        const text = window.prompt('Enter the text for the link:')
+        const valid = validURL(text)
+        if (valid) {
+            editor
+                .insertText(text)
+                .moveFocusBackward(text.length)
+                .command(wrapLink, text)
+        }
     }
 
     /**
@@ -355,6 +524,7 @@ class RichTextExample extends React.Component {
      */
 
     onClickBlock = (event, type) => {
+
         event.preventDefault()
 
         const { editor } = this
@@ -364,11 +534,22 @@ class RichTextExample extends React.Component {
         if (type === 'emoji') {
             event.preventDefault()
             const code = '😍'
-            console.log('this.editor ', this.editor)
             return this.editor
                 .insertInline({ type: 'emoji', data: { code } })
                 .moveToStartOfNextText()
                 .focus()
+        }
+
+        if (type === "table") {
+            return this.setState({
+                showTableConfig: !this.state.showTableConfig
+            }, () => {
+                this.editor.toggleMark(type)
+            })
+        }
+
+        if (type === 'image') {
+            return this.onClickImage(event)
         }
 
         // Handle everything but list buttons.
