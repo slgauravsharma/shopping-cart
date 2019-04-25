@@ -26,6 +26,15 @@ import {
 } from "./editor-plugins";
 import { validURL, generateTable } from './utils';
 import TableSettings from './TableSettings';
+//
+import DeepTable from "slate-deep-table";
+import styled from "styled-components";
+import Table from "./table/Table";
+import Row from "./table/Row";
+import Cell from "./table/Cell";
+//
+
+// import TablePosition from './TablePosition';
 
 const plugins = [
     InsertWordHotKey({ char: "&", word: "and" }),
@@ -40,6 +49,12 @@ const plugins = [
     MarkHotKey({ type: 'redo', key: 'y', }),
     BlockHotKey({ type: "code", normalType: "paragraph", key: "`" }),
     BlockColorHotKey({ key: "g", color: "green" }),
+    DeepTable({
+        typeTable: "table",
+        typeRow: "table_row",
+        typeCell: "table_cell",
+        typeContent: "paragraph"
+    })
     //WrapInlineHotKey({ type: "link", key: "u" }),
 ];
 
@@ -215,6 +230,97 @@ class RichTextExample extends React.Component {
         })
     }
 
+    onRemoveTable = () => {
+        // console.log('remove ', this.onChange())
+        // console.log('this.node ', this.node)
+        // console.log('parent ', this.node.getParent())
+        // this.editor.deleteLineBackward()
+        console.log('this.editor ', this.editor)
+        // const key = this.editor.selection._map._root.entries[1].key
+        // console.log('key ', key)
+        var selectedBlocks = this.state.value.blocks
+        const selection = this.editor.value.selection
+        // console.log('selection--- ', selection.focus.key)
+        // console.log('result ', this.node.getPreviousSibling(selection.focus.key))
+        // console.log('selectedBlocks ', selectedBlocks)
+        // this.editor.removeNodeByKey(selection)
+        // var value = editor.value;
+        // var startBlock = value.startBlock;
+
+
+        // var pos = TablePosition.create(value, startBlock, opts);
+        // var table = pos.table;
+
+
+        // return editor.deselect().removeNodeByKey(table.key);
+    }
+
+    static getDerivedStateFromProps(next, p) {
+        console.log('next ', p)
+        const path = p.value.focusBlock && p.value.focusBlock.getPath(p.value.focusBlock.key)
+        console.log('path----- ', path) //getPath(p.value.key  // key: -p.value.focusBlock.key
+        console.log('parent ', p.value.focusBlock && p.value.focusBlock.getParent(path))
+        return null
+    }
+
+    //
+    onInsertTable = () => {
+        this.onChange(this.editor.insertTable(10, 2));
+    };
+
+    onInsertColumn = () => {
+        this.onChange(this.editor.insertColumn());
+    };
+
+    onInsertRow = () => {
+        this.onChange(this.editor.insertRow());
+    };
+
+    onRemoveColumn = () => {
+        this.onChange(this.editor.removeColumn());
+    };
+
+    onRemoveRow = () => {
+        this.onChange(this.editor.removeRow());
+    };
+
+    onRemoveTable = () => {
+        this.onChange(this.editor.removeTable());
+    };
+
+    onToggleHeaders = () => {
+        this.onChange(this.editor.toggleTableHeaders());
+    };
+
+    renderNormalToolbar = () => {
+        return (
+            <div className="buttons">
+                <button onClick={this.onInsertTable}>Insert Table</button>
+            </div>
+        );
+    };
+
+    renderTableToolbar = () => {
+        return (
+            <div className="buttons">
+                <button onClick={this.onInsertTable}>Insert Table</button>
+                <button onClick={this.onInsertColumn}>Insert Column</button>
+                <button onClick={this.onInsertRow}>Insert Row</button>
+                <button onClick={this.onRemoveColumn}>Remove Column</button>
+                <button onClick={this.onRemoveRow}>Remove Row</button>
+                <button onClick={this.onRemoveTable}>Remove Table</button>
+                <button onClick={this.onToggleHeaders}>Toggle Headers</button>
+            </div>
+        );
+    };
+
+    handleInsertTable = async () => {
+        if (!this.editor) return;
+        this.editor.insertTable();
+    };
+
+    //
+
 
 
     /**
@@ -227,6 +333,9 @@ class RichTextExample extends React.Component {
         const focusBlockType = this.editor &&
             this.editor.controller.value.focusBlock
             && this.editor.controller.value.focusBlock.type
+        const { value } = this.state;
+
+        const isTable = this.editor && this.editor.isSelectionInTable(value);
         return (
             <div>
                 <Toolbar>
@@ -246,7 +355,11 @@ class RichTextExample extends React.Component {
                     {this.renderBlockButton('image', 'Image')}
                     {this.renderBlockButton('table', 'Table')}
                 </Toolbar>
-                {focusBlockType === 'table-cell' ? <TableSettings editor={this.editor} /> : <div style={{ height: '40px' }}></div>}
+                {/* {focusBlockType === 'table-cell' ? <TableSettings editor={this.editor} onChange={this.onChange} /> : <div style={{ height: '40px' }}></div>} */}
+                {/* {focusBlockType === 'table-cell' && <button onClick={this.onRemoveTable}>Remove Table</button>
+                } */}
+                {isTable ? this.renderTableToolbar() : this.renderNormalToolbar()}
+
                 <Editor
                     plugins={plugins}
                     spellCheck
@@ -405,6 +518,20 @@ class RichTextExample extends React.Component {
                 return <tr {...attributes}>{children}</tr>
             case 'table-cell':
                 return <td {...attributes}>{children}</td>
+            // case "table":
+            //     return (
+            //         <Table attributes={attributes} editor={editor}>
+            //             {children}
+            //         </Table>
+            //     );
+            // case "table_row":
+            //     return <Row attributes={attributes}>{children}</Row>;
+            // case "table_cell":
+            //     return (
+            //         <Cell node={node} attributes={attributes}>
+            //             {children}
+            //         </Cell>
+            //     );
             default:
                 return next()
         }

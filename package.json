@@ -24,7 +24,8 @@
     "slate-hyperscript": "^0.11.29",
     "slate-react": "^0.21.20",
     "slate-schema-violations": "^0.1.39",
-    "slate-simple-table": "^0.12.3"
+    "slate-simple-table": "^0.12.3",
+    "styled-components": "^4.2.0"
   },
   "scripts": {
     "start": "react-scripts start",

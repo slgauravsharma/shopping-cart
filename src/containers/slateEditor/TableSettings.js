@@ -6,7 +6,18 @@ class TableSettings extends Component {
     onRemoveTable = () => {
         console.log('onRemoveTable editor- ', this.props.editor)
         try {
-            if (this.props.editor.controller.value.focusBlock.type === 'table-cell') {
+            const { editor, onChange } = this.props
+            if (editor.controller.value.focusBlock.type === 'table-cell') {
+                // onChange(
+                //     editor.removeTable()
+                // );
+                // const cursorBlock = editor.value.document.getDescendant('_cursor_')
+                // return editor
+                //     .moveToRangeOfNode(cursorBlock)
+                //     .removeTable()
+                //     .value;
+                // this.props.editor.delete()
+
                 // console.log('called--')
                 // do {
                 //     this.props.editor.delete()
