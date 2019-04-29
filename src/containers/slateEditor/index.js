@@ -35,6 +35,8 @@ import Cell from "./table/Cell";
 //
 
 // import TablePosition from './TablePosition';
+import Video from './Video'
+
 
 const plugins = [
     InsertWordHotKey({ char: "&", word: "and" }),
@@ -132,11 +134,15 @@ class RichTextExample extends React.Component {
             image: {
                 isVoid: true,
             },
+            video: {
+                isVoid: true,
+            },
         },
         inlines: {
             emoji: {
                 isVoid: true,
             },
+
         },
     }
 
@@ -223,105 +229,20 @@ class RichTextExample extends React.Component {
         this.setState({
             showTableConfig: false,
         }, () => {
-            this.editor.insertBlock(generateTable(rows, cols))
+            this.editor.insertTable(cols, rows);
             this.editor.toggleMark('table')
             this.initialRowRef.state.value = ''
             this.initialColRef.state.value = ''
         })
     }
 
-    onRemoveTable = () => {
-        // console.log('remove ', this.onChange())
-        // console.log('this.node ', this.node)
-        // console.log('parent ', this.node.getParent())
-        // this.editor.deleteLineBackward()
-        console.log('this.editor ', this.editor)
-        // const key = this.editor.selection._map._root.entries[1].key
-        // console.log('key ', key)
-        var selectedBlocks = this.state.value.blocks
-        const selection = this.editor.value.selection
-        // console.log('selection--- ', selection.focus.key)
-        // console.log('result ', this.node.getPreviousSibling(selection.focus.key))
-        // console.log('selectedBlocks ', selectedBlocks)
-        // this.editor.removeNodeByKey(selection)
-        // var value = editor.value;
-        // var startBlock = value.startBlock;
-
-
-        // var pos = TablePosition.create(value, startBlock, opts);
-        // var table = pos.table;
-
-
-        // return editor.deselect().removeNodeByKey(table.key);
-    }
-
-    static getDerivedStateFromProps(next, p) {
-        console.log('next ', p)
-        const path = p.value.focusBlock && p.value.focusBlock.getPath(p.value.focusBlock.key)
-        console.log('path----- ', path) //getPath(p.value.key  // key: -p.value.focusBlock.key
-        console.log('parent ', p.value.focusBlock && p.value.focusBlock.getParent(path))
-        return null
-    }
-
-    //
-    onInsertTable = () => {
-        this.onChange(this.editor.insertTable(10, 2));
-    };
-
-    onInsertColumn = () => {
-        this.onChange(this.editor.insertColumn());
-    };
-
-    onInsertRow = () => {
-        this.onChange(this.editor.insertRow());
-    };
-
-    onRemoveColumn = () => {
-        this.onChange(this.editor.removeColumn());
-    };
-
-    onRemoveRow = () => {
-        this.onChange(this.editor.removeRow());
-    };
-
-    onRemoveTable = () => {
-        this.onChange(this.editor.removeTable());
-    };
-
-    onToggleHeaders = () => {
-        this.onChange(this.editor.toggleTableHeaders());
-    };
-
-    renderNormalToolbar = () => {
-        return (
-            <div className="buttons">
-                <button onClick={this.onInsertTable}>Insert Table</button>
-            </div>
-        );
-    };
-
-    renderTableToolbar = () => {
-        return (
-            <div className="buttons">
-                <button onClick={this.onInsertTable}>Insert Table</button>
-                <button onClick={this.onInsertColumn}>Insert Column</button>
-                <button onClick={this.onInsertRow}>Insert Row</button>
-                <button onClick={this.onRemoveColumn}>Remove Column</button>
-                <button onClick={this.onRemoveRow}>Remove Row</button>
-                <button onClick={this.onRemoveTable}>Remove Table</button>
-                <button onClick={this.onToggleHeaders}>Toggle Headers</button>
-            </div>
-        );
-    };
-
-    handleInsertTable = async () => {
-        if (!this.editor) return;
-        this.editor.insertTable();
-    };
-
-    //
-
-
+    // static getDerivedStateFromProps(next, p) {
+    //     console.log('next ', p)
+    //     const path = p.value.focusBlock && p.value.focusBlock.getPath(p.value.focusBlock.key)
+    //     console.log('path----- ', path) //getPath(p.value.key  // key: -p.value.focusBlock.key
+    //     console.log('parent ', p.value.focusBlock && p.value.focusBlock.getParent(path))
+    //     return null
+    // }
 
     /**
      * Render.
@@ -330,11 +251,7 @@ class RichTextExample extends React.Component {
      */
 
     render() {
-        const focusBlockType = this.editor &&
-            this.editor.controller.value.focusBlock
-            && this.editor.controller.value.focusBlock.type
         const { value } = this.state;
-
         const isTable = this.editor && this.editor.isSelectionInTable(value);
         return (
             <div>
@@ -354,11 +271,11 @@ class RichTextExample extends React.Component {
                     {this.renderMarkButton('link', 'link')}
                     {this.renderBlockButton('image', 'Image')}
                     {this.renderBlockButton('table', 'Table')}
+                    {this.renderBlockButton('video', 'Video')}
                 </Toolbar>
-                {/* {focusBlockType === 'table-cell' ? <TableSettings editor={this.editor} onChange={this.onChange} /> : <div style={{ height: '40px' }}></div>} */}
-                {/* {focusBlockType === 'table-cell' && <button onClick={this.onRemoveTable}>Remove Table</button>
-                } */}
-                {isTable ? this.renderTableToolbar() : this.renderNormalToolbar()}
+                {isTable ? <TableSettings editor={this.editor}
+                    onRemoveTable={this.onRemoveTable}
+                    onChange={this.onChange} /> : <div style={{ height: '40px' }}></div>}
 
                 <Editor
                     plugins={plugins}
@@ -373,7 +290,6 @@ class RichTextExample extends React.Component {
                     renderNode={this.renderNode}
                     renderMark={this.renderMark}
                     schema={this.schema}
-
                 />
             </div>
         )
@@ -518,6 +434,8 @@ class RichTextExample extends React.Component {
                 return <tr {...attributes}>{children}</tr>
             case 'table-cell':
                 return <td {...attributes}>{children}</td>
+            case 'video':
+                return <Video {...props} />
             // case "table":
             //     return (
             //         <Table attributes={attributes} editor={editor}>
