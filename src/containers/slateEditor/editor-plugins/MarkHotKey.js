@@ -13,6 +13,13 @@ export function MarkHotKey(options) {
         return editor.redo()
       }
 
+      if (event.keyCode === 13 && type === 'twocol') {
+        event.preventDefault()
+        editor.insertText('\n')
+        return
+      }
+
+
       // remove charater when backspace press
       if (eventKey === key && eventKey == 8 || eventKey == 46) {
         const focusBlockType =

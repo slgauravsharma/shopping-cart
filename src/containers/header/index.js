@@ -17,7 +17,7 @@ class Header extends Component {
     return (
       <div className="header">
         <div className="title" onClick={this.onHeaderTitleClick}>
-         Hallwaze
+          Hallwaze V2.0
         </div>
         {/* <Badge count={this.props.carts.length} className="cart-badge">
           <Button

@@ -33,3 +33,8 @@
 .css-548ii2 {
    margin-bottom: 0 !important;
 }
+.editor {
+    overflow-y: scroll;
+    height: calc(100vh - 140px);
+    padding-bottom: 10px !important;
+}

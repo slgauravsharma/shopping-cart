@@ -56,12 +56,9 @@ class Video extends React.Component {
     renderVideo = () => {
         const { node, isFocused } = this.props
         const video = node.data.get('video')
-        console.log('props ', this.props)
-        console.log('video ', video)
 
         const wrapperStyle = {
             position: 'relative',
-            outline: isFocused ? '2px solid blue' : 'none',
         }
 
         const maskStyle = {
@@ -77,11 +74,14 @@ class Video extends React.Component {
 
         const iframeStyle = {
             display: 'block',
+            background: '#e5e5e5',
+            outline: isFocused ? '2px solid blue' : 'none',
+
         }
 
         return (
             <div style={wrapperStyle}>
-                <div style={maskStyle} />
+                <div style={maskStyle} >Remove</div>
                 <iframe
                     id="ytplayer"
                     type="text/html"

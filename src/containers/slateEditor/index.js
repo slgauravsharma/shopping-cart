@@ -36,6 +36,7 @@ import Cell from "./table/Cell";
 
 // import TablePosition from './TablePosition';
 import Video from './Video'
+import './index.scss'
 
 
 const plugins = [
@@ -56,8 +57,9 @@ const plugins = [
         typeRow: "table_row",
         typeCell: "table_cell",
         typeContent: "paragraph"
-    })
-    //WrapInlineHotKey({ type: "link", key: "u" }),
+    }),
+    MarkHotKey({ type: 'twocol' })
+    // WrapInlineHotKey({ type: "link", key: "u" }),
 ];
 
 
@@ -131,10 +133,10 @@ class RichTextExample extends React.Component {
             },
         },
         blocks: {
-            image: {
+            video: {
                 isVoid: true,
             },
-            video: {
+            image: {
                 isVoid: true,
             },
         },
@@ -272,25 +274,28 @@ class RichTextExample extends React.Component {
                     {this.renderBlockButton('image', 'Image')}
                     {this.renderBlockButton('table', 'Table')}
                     {this.renderBlockButton('video', 'Video')}
+                    {this.renderBlockButton('twocol', 'Twocol')}
                 </Toolbar>
                 {isTable ? <TableSettings editor={this.editor}
                     onRemoveTable={this.onRemoveTable}
                     onChange={this.onChange} /> : <div style={{ height: '40px' }}></div>}
+                <div className="editor">
+                    <Editor
+                        plugins={plugins}
+                        spellCheck
+                        autoFocus
+                        placeholder="enter ..."
+                        ref={this.ref}
+                        value={this.state.value}
+                        onChange={this.onChange}
+                        // onKeyDown={this.onKeyDown}
+                        // onPaste={this.onPaste}
+                        renderNode={this.renderNode}
+                        renderMark={this.renderMark}
+                        schema={this.schema}
 
-                <Editor
-                    plugins={plugins}
-                    spellCheck
-                    autoFocus
-                    placeholder="enter ..."
-                    ref={this.ref}
-                    value={this.state.value}
-                    onChange={this.onChange}
-                    // onKeyDown={this.onKeyDown}
-                    // onPaste={this.onPaste}
-                    renderNode={this.renderNode}
-                    renderMark={this.renderMark}
-                    schema={this.schema}
-                />
+                    />
+                </div>
             </div>
         )
     }
@@ -436,6 +441,15 @@ class RichTextExample extends React.Component {
                 return <td {...attributes}>{children}</td>
             case 'video':
                 return <Video {...props} />
+            case 'twocol':
+                return <div style={{ display: 'flex', flex: 1, border: '1px dashed #999', }}>
+                    <div  {...attributes} style={{}}>
+                        {children}
+                    </div>
+                    {/* <div  {...attributes} style={{ flex: 1, border: '1px dashed #999', height: '100%' }}>
+                        {children}
+                    </div> */}
+                </div>
             // case "table":
             //     return (
             //         <Table attributes={attributes} editor={editor}>
@@ -488,6 +502,8 @@ class RichTextExample extends React.Component {
      */
 
     onChange = ({ value }) => {
+        const focusBlock = this.editor.controller.value.focusBlock && this.editor.controller.value.focusBlock.type
+        console.log('focusBlock ', focusBlock)
         // const plainText = Plain.serialize(value)
         if (value.document != this.state.value.document) {
             const content = JSON.stringify(value.toJSON())
