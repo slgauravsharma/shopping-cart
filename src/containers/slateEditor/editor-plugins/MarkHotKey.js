@@ -20,16 +20,16 @@ export function MarkHotKey(options) {
       }
 
 
-      // remove charater when backspace press
-      if (eventKey === key && eventKey == 8 || eventKey == 46) {
-        const focusBlockType =
-          editor.controller.value.focusBlock
-          && editor.controller.value.focusBlock.type
-        if (focusBlockType !== 'table-cell') {
-          event.preventDefault()
-          editor.deleteCharBackward()
-        }
-      }
+      // // remove charater when backspace press
+      // if (eventKey === key && eventKey == 8 || eventKey == 46) {
+      //   const focusBlockType =
+      //     editor.controller.value.focusBlock
+      //     && editor.controller.value.focusBlock.type
+      //   if (focusBlockType !== 'table-cell') {
+      //     event.preventDefault()
+      //     editor.deleteCharBackward()
+      //   }
+      // }
       // Check that the key pressed matches our `key` option.
       if (!event.ctrlKey || event.key !== key) return next();
       // Prevent the default characters from being inserted.
